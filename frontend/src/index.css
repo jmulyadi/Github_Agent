@@ -1,0 +1,63 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+ 
+@layer base {
+  :root {
+    --background: 228 25% 13%;
+    --foreground: 210 40% 98%;
+ 
+    --card: 228 25% 13%;
+    --card-foreground: 210 40% 98%;
+ 
+    --popover: 228 25% 13%;
+    --popover-foreground: 210 40% 98%;
+ 
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+ 
+    --secondary: 228 23% 20%;
+    --secondary-foreground: 210 40% 98%;
+ 
+    --muted: 228 23% 20%;
+    --muted-foreground: 215 20.2% 65.1%;
+ 
+    --accent: 167 81% 35%;
+    --accent-foreground: 210 40% 98%;
+ 
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+ 
+    --border: 228 23% 20%;
+    --input: 228 23% 20%;
+    --ring: 212.7 26.8% 83.9%;
+ 
+    --radius: 0.5rem;
+  }
+}
+ 
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+.glass-panel {
+  @apply bg-secondary/30 backdrop-blur-lg border border-white/10;
+}
+
+.message-bubble {
+  @apply p-4 rounded-lg animate-fade-in max-w-[80%];
+}
+
+.user-message {
+  @apply glass-panel ml-auto;
+}
+
+.ai-message {
+  @apply bg-accent/10 border border-accent/20 mr-auto;
+}
