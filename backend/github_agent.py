@@ -18,7 +18,11 @@ from dotenv import load_dotenv
 from pydantic_ai import Agent, ModelRetry, RunContext
 from pydantic_ai.models.openai import OpenAIModel
 
-load_dotenv()
+# Get the path to the .env file one directory up
+env_path = Path(__file__).resolve().parent.parent / ".env"
+
+# Load the .env file
+load_dotenv(dotenv_path=env_path)
 
 # llm = os.getenv("LLM_MODEL", "gpt-3.5-turbo"):Warning
 model = OpenAIModel(
