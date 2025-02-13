@@ -1,7 +1,7 @@
-
 import { useState } from "react";
 import { Send } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import clsx from "clsx"; // Import clsx for cleaner class handling
 
 interface Message {
   id: string;
@@ -36,18 +36,26 @@ export const ChatInterface = ({ isCollapsed }: ChatInterfaceProps) => {
       const aiResponse: Message = {
         id: (Date.now() + 1).toString(),
         type: "ai",
-        content: "I'll analyze that GitHub repository for you shortly. (This is a placeholder response)",
+        content:
+          "I'll analyze that GitHub repository for you shortly. (This is a placeholder response)",
       };
       setMessages((prev) => [...prev, aiResponse]);
     }, 1000);
   };
 
   return (
-    <div className={`min-h-screen ${isCollapsed ? "pl-16" : "pl-64"} transition-all duration-300 md:pl-16 lg:${isCollapsed ? "pl-16" : "pl-64"}`}>
+    <div
+      className={clsx(
+        "min-h-screen transition-all duration-300",
+        isCollapsed ? "pl-16" : "pl-64",
+      )}
+    >
       <div className="max-w-4xl mx-auto p-2 md:p-4 pt-4 md:pt-8">
         {messages.length === 0 ? (
           <div className="text-center py-10 md:py-20">
-            <h1 className="text-2xl md:text-4xl font-bold mb-3 md:mb-4 text-accent">GitHub Repository Analyzer</h1>
+            <h1 className="text-2xl md:text-4xl font-bold mb-3 md:mb-4 text-accent">
+              GitHub Repository Analyzer
+            </h1>
             <p className="text-gray-400 text-sm md:text-base px-4">
               Paste a GitHub URL and ask questions about the repository.
             </p>
@@ -69,18 +77,21 @@ export const ChatInterface = ({ isCollapsed }: ChatInterfaceProps) => {
 
         <form
           onSubmit={handleSubmit}
-          className={`fixed bottom-0 ${
-            isCollapsed ? "left-16" : "left-64"
-          } right-0 p-2 md:p-4 bg-background/80 backdrop-blur-lg border-t border-white/10 transition-all duration-300 md:left-16 lg:${
-            isCollapsed ? "left-16" : "left-64"
-          }`}
+          className={clsx(
+            "fixed bottom-0 right-0 p-2 md:p-4 bg-background/80 backdrop-blur-lg border-t border-white/10 transition-all duration-300",
+            isCollapsed ? "left-16" : "left-64",
+          )}
         >
           <div className="flex gap-2 md:gap-4 max-w-4xl mx-auto">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder={isMobile ? "Type a message..." : "Enter a GitHub URL or ask a question..."}
+              placeholder={
+                isMobile
+                  ? "Type a message..."
+                  : "Enter a GitHub URL or ask a question..."
+              }
               className="flex-1 bg-secondary/30 rounded-lg px-3 md:px-4 py-2.5 md:py-3 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-accent/50 border border-white/10"
             />
             <button
