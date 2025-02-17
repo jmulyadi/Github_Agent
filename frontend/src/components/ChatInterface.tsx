@@ -1,7 +1,9 @@
+import { getSessionId } from "@/lib/session_id";
 import { useState } from "react";
 import { Send } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import clsx from "clsx"; // Import clsx for cleaner class handling
+import { supabase } from "@/lib/supabase";
 
 interface Message {
   id: string;
@@ -12,13 +14,13 @@ interface Message {
 interface ChatInterfaceProps {
   isCollapsed: boolean;
 }
-
+const session_id = getSessionId();
 export const ChatInterface = ({ isCollapsed }: ChatInterfaceProps) => {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const isMobile = useIsMobile();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
 
@@ -27,6 +29,17 @@ export const ChatInterface = ({ isCollapsed }: ChatInterfaceProps) => {
       type: "user",
       content: input,
     };
+    // save to supabase
+    const { error } = await supabase.from("messages").insert([
+      {
+        session_id: session_id,
+        message: JSON.stringify(newMessage),
+      },
+    ]);
+    if (error) {
+      console.error("error saving user message to db:", error.message);
+      return;
+    }
 
     setMessages([...messages, newMessage]);
     setInput("");

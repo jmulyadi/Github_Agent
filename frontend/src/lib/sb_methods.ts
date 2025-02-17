@@ -19,6 +19,7 @@ export const getConversations = async (): Promise<Conversation[]> => {
   const { data, error } = await supabase
     .from("messages")
     .select("id, title, created_at")
+    //.eq("session_id", sessionId) // Retrieve messages from the same session
     .order("created_at", { ascending: false });
 
   if (error) {
