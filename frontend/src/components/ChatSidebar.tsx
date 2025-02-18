@@ -1,41 +1,54 @@
 import { MessageSquare, ChevronLeft, ChevronRight } from "lucide-react";
-import { getConversations, Conversation } from "@/lib/sb_methods";
+import {
+  getConversations,
+  Conversation,
+  subscribeToNewMessages,
+} from "@/lib/sb_methods";
 import { useEffect, useState } from "react";
-//
-//interface Conversation {
-//  id: string;
-//  title: string;
-//  timestamp: string;
-//}
 
 interface ChatSidebarProps {
   isCollapsed: boolean;
   setIsCollapsed: (value: boolean) => void;
+  setActiveChatId: (activeChatId: string) => void;
+  activeChatId: string | null;
 }
 
 export const ChatSidebar = ({
   isCollapsed,
   setIsCollapsed,
+  setActiveChatId,
+  activeChatId,
 }: ChatSidebarProps) => {
-  // Placeholder conversations (will come from Supabase later)
-  //const conversations: Conversation[] = [
-  //  { id: "1", title: "React Router Analysis", timestamp: "2h ago" },
-  //  { id: "2", title: "Next.js Repo Review", timestamp: "5h ago" },
-  //  { id: "3", title: "Vite Configuration", timestamp: "1d ago" },
-  //];
-
   // State to hold conversations fetched from Supabase
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  // State to hold the currently selected chat's ID
+  //const [activeChatId, setActiveChatId] = useState<string | null>(null);
 
   // Fetch conversations when the component mounts
   useEffect(() => {
     const fetchConversations = async () => {
+      // Get all conversations
       const convos = await getConversations();
       setConversations(convos);
+
+      // Set the active chat ID to the most recent chat (or first chat if empty)
+      if (convos.length > 0) {
+        setActiveChatId(convos[0].id); // Most recent chat (based on how data is ordered)
+      }
     };
 
     fetchConversations();
   }, []); // Empty dependency array ensures this runs only once
+
+  // Subscribe to new messages for the active chat
+  useEffect(() => {
+    if (activeChatId) {
+      const unsubscribe = subscribeToNewMessages(activeChatId);
+
+      // Cleanup the subscription when the component is unmounted or chatId changes
+      return () => unsubscribe();
+    }
+  }, [activeChatId]); // Re-run this effect whenever activeChatId changes
 
   return (
     <div
@@ -70,8 +83,13 @@ export const ChatSidebar = ({
           <div className="space-y-1.5 md:space-y-2">
             {conversations.map((conv) => (
               <div
-                key={conv.id}
+                key={conv.id} // Use chat_id for unique identifier
                 className="p-2.5 md:p-3 rounded-lg hover:bg-white/5 cursor-pointer transition-colors group"
+                // When clicked, set the active chat's ID
+                onClick={() => {
+                  console.log("curr chat_id: ", conv.id, conv);
+                  setActiveChatId(conv.id);
+                }}
               >
                 <div className="text-sm font-medium truncate">{conv.title}</div>
                 <div className="text-xs text-gray-400">{conv.timestamp}</div>

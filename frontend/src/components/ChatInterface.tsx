@@ -6,16 +6,19 @@ import clsx from "clsx"; // Import clsx for cleaner class handling
 import { supabase } from "@/lib/supabase";
 
 interface Message {
-  id: string;
   type: "user" | "ai";
   content: string;
 }
 
 interface ChatInterfaceProps {
   isCollapsed: boolean;
+  activeChatId: string | null;
 }
 const session_id = getSessionId();
-export const ChatInterface = ({ isCollapsed }: ChatInterfaceProps) => {
+export const ChatInterface = ({
+  isCollapsed,
+  activeChatId,
+}: ChatInterfaceProps) => {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const isMobile = useIsMobile();
@@ -25,29 +28,45 @@ export const ChatInterface = ({ isCollapsed }: ChatInterfaceProps) => {
     if (!input.trim()) return;
 
     const newMessage: Message = {
-      id: Date.now().toString(),
       type: "user",
       content: input,
     };
-    // save to supabase
+
+    // Check if the message object can be stringified
+    let messageString;
+    try {
+      messageString = JSON.stringify(newMessage); // Try stringifying the object
+    } catch (error) {
+      console.error("Error stringifying message:", error);
+      return; // If stringification fails, exit early
+    }
+
+    // Check if activeChatId exists
+    if (!activeChatId) {
+      console.error("Error: No active chat ID available.");
+      return;
+    }
+
+    // Save the message to Supabase
     const { error } = await supabase.from("messages").insert([
       {
+        chat_id: activeChatId,
         session_id: session_id,
-        message: JSON.stringify(newMessage),
+        message: messageString,
       },
     ]);
+
     if (error) {
-      console.error("error saving user message to db:", error.message);
+      console.error("Error saving user message to db:", error.message);
       return;
     }
 
     setMessages([...messages, newMessage]);
-    setInput("");
+    setInput(""); // Reset input field
 
     // Placeholder AI response (will be replaced with actual API call)
     setTimeout(() => {
       const aiResponse: Message = {
-        id: (Date.now() + 1).toString(),
         type: "ai",
         content:
           "I'll analyze that GitHub repository for you shortly. (This is a placeholder response)",
