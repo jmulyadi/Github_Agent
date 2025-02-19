@@ -1,5 +1,5 @@
 import { getSessionId } from "@/lib/session_id";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Send } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import clsx from "clsx"; // Import clsx for cleaner class handling
@@ -22,6 +22,37 @@ export const ChatInterface = ({
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const isMobile = useIsMobile();
+
+  // Fetch messages when activeChatId changes
+  useEffect(() => {
+    const fetchMessages = async () => {
+      if (!activeChatId) return;
+
+      const { data, error } = await supabase
+        .from("messages")
+        .select("message, response")
+        .eq("chat_id", activeChatId)
+        .order("created_at", { ascending: true }); // Assuming created_at exists
+
+      if (error) {
+        console.error("Error fetching messages:", error.message);
+        return;
+      }
+
+      // Parse messages and include AI responses
+
+      const parsedMessages = [];
+      data.forEach((msg) => {
+        const message = msg.message;
+        const response = msg.response;
+        parsedMessages.push(JSON.parse(message));
+        if (response != null) parsedMessages.push(JSON.parse(response));
+      });
+      setMessages(parsedMessages);
+    };
+
+    fetchMessages();
+  }, [activeChatId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,6 +77,12 @@ export const ChatInterface = ({
       console.error("Error: No active chat ID available.");
       return;
     }
+    const aiResponse: Message = {
+      type: "ai",
+      content:
+        "I'll analyze that GitHub repository for you shortly. (This is a placeholder response)",
+    };
+    // AI CALL HEREERE!!!
 
     // Save the message to Supabase
     const { error } = await supabase.from("messages").insert([
@@ -53,6 +90,7 @@ export const ChatInterface = ({
         chat_id: activeChatId,
         session_id: session_id,
         message: messageString,
+        response: JSON.stringify(aiResponse),
       },
     ]);
 
@@ -66,11 +104,6 @@ export const ChatInterface = ({
 
     // Placeholder AI response (will be replaced with actual API call)
     setTimeout(() => {
-      const aiResponse: Message = {
-        type: "ai",
-        content:
-          "I'll analyze that GitHub repository for you shortly. (This is a placeholder response)",
-      };
       setMessages((prev) => [...prev, aiResponse]);
     }, 1000);
   };
