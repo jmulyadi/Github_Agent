@@ -108,7 +108,7 @@ export const ChatInterface = ({
           <div className="space-y-4 md:space-y-6 mb-20 md:mb-24 px-2 md:px-4">
             {messages.map((message) => (
               <div
-                key={message.id}
+                key={message.request_id}
                 className={`message-bubble ${
                   message.type === "user" ? "user-message" : "ai-message"
                 } text-sm md:text-base`}

@@ -77,10 +77,7 @@ export const getMessagesForChat = async (
   }));
 };
 // 🔥 Set up a real-time listener for new chats
-export const subscribeToNewMessages = (
-  chatId: string,
-  setMessages: (messages: Message[]) => void,
-) => {
+export const subscribeToNewMessages = (chatId: string) => {
   // Create a subscription for new messages related to the specific chatId
   const messageSubscription = supabase
     .channel("messages-listener")

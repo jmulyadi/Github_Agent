@@ -1,4 +1,10 @@
-import { MessageSquare, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  MessageSquare,
+  ChevronLeft,
+  ChevronRight,
+  SquarePen,
+  Sword,
+} from "lucide-react";
 import {
   getConversations,
   Conversation,
@@ -42,12 +48,8 @@ export const ChatSidebar = ({
 
   // Subscribe to new messages for the active chat
   useEffect(() => {
-    if (activeChatId) {
-      const unsubscribe = subscribeToNewMessages(activeChatId);
-
-      // Cleanup the subscription when the component is unmounted or chatId changes
-      return () => unsubscribe();
-    }
+    console.log("gott do something here");
+    // Cleanup the subscription when the component is unmounted or chatId changes
   }, [activeChatId]); // Re-run this effect whenever activeChatId changes
 
   return (
@@ -71,9 +73,15 @@ export const ChatSidebar = ({
         <div
           className={`flex items-center ${isCollapsed ? "justify-center" : "justify-between"} mb-6 md:mb-8`}
         >
-          <MessageSquare
-            className={`w-5 h-5 md:w-6 md:h-6 text-accent ${!isCollapsed && "mr-2"}`}
-          />
+          <button
+            //ADD NEW CHAT FUNCTION EHRE
+            //onClick={}
+            className="rounded-lg p-2 hover:bg-white/5 transition-colors"
+          >
+            <SquarePen
+              className={`md:w-6 md:h-6 text-accent ${!isCollapsed && "mr-2"}`}
+            />
+          </button>
           {!isCollapsed && (
             <span className="font-semibold text-base md:text-lg">Chats</span>
           )}
