@@ -44,7 +44,8 @@ supabase: Client = create_client(
 # Request/Response Models
 class AgentRequest(BaseModel):
     query: str
-    user_id: str
+    # user_id: str
+    chat_id: str
     request_id: str
     session_id: str
 
@@ -68,7 +69,7 @@ def verify_token(
 
 
 async def fetch_conversation_history(
-    session_id: str, limit: int = 10
+    session_id: str, chat_id: str, limit: int = 10
 ) -> List[Dict[str, Any]]:
     """Fetch the most recent conversation history for a session."""
     try:
@@ -76,6 +77,7 @@ async def fetch_conversation_history(
             supabase.table("messages")
             .select("*")
             .eq("session_id", session_id)
+            .eq("chat_id", chat_id)
             .order("created_at", desc=True)
             .limit(limit)
             .execute()
@@ -91,7 +93,11 @@ async def fetch_conversation_history(
 
 
 async def store_message(
-    session_id: str, message_type: str, content: str, data: Optional[Dict] = None
+    session_id: str,
+    message_type: str,
+    content: str,
+    chat_id: str,
+    data: Optional[Dict] = None,
 ):
     """Store a message in the Supabase messages table."""
     message_obj = {"type": message_type, "content": content}
@@ -100,7 +106,7 @@ async def store_message(
 
     try:
         supabase.table("messages").insert(
-            {"session_id": session_id, "message": message_obj}
+            {"chat_id": chat_id, "session_id": session_id, "message": message_obj}
         ).execute()
     except Exception as e:
         raise HTTPException(
@@ -115,24 +121,30 @@ async def github_agent_endpoint(
 ):
     try:
         # Fetch conversation history
-        conversation_history = await fetch_conversation_history(request.session_id)
+        conversation_history = await fetch_conversation_history(
+            request.session_id, request.chat_id
+        )
 
         # Convert conversation history to format expected by agent
         messages = []
         for msg in conversation_history:
+            print(msg)
             msg_data = msg["message"]
             msg_type = msg_data["type"]
             msg_content = msg_data["content"]
             msg = (
                 ModelRequest(parts=[UserPromptPart(content=msg_content)])
-                if msg_type == "human"
+                if msg_type == "user"
                 else ModelResponse(parts=[TextPart(content=msg_content)])
             )
             messages.append(msg)
-
+        print(messages)
         # Store user's query
         await store_message(
-            session_id=request.session_id, message_type="human", content=request.query
+            session_id=request.session_id,
+            message_type="user",
+            content=request.query,
+            chat_id=request.chat_id,
         )
 
         # Initialize agent dependencies
@@ -148,6 +160,7 @@ async def github_agent_endpoint(
         await store_message(
             session_id=request.session_id,
             message_type="ai",
+            chat_id=request.chat_id,
             content=result.data,
             data={"request_id": request.request_id},
         )
@@ -160,6 +173,7 @@ async def github_agent_endpoint(
         await store_message(
             session_id=request.session_id,
             message_type="ai",
+            chat_id=request.chat_id,
             content="I apologize, but I encountered an error processing your request.",
             data={"error": str(e), "request_id": request.request_id},
         )

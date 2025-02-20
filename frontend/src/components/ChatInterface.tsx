@@ -1,5 +1,5 @@
 import { getSessionId } from "@/lib/session_id";
-import { useState, useEffect } from "react";
+import { useState, useEffect, act } from "react";
 import { Send } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import clsx from "clsx"; // Import clsx for cleaner class handling
@@ -30,7 +30,7 @@ export const ChatInterface = ({
 
       const { data, error } = await supabase
         .from("messages")
-        .select("message, response")
+        .select("message")
         .eq("chat_id", activeChatId)
         .order("created_at", { ascending: true }); // Assuming created_at exists
 
@@ -44,15 +44,13 @@ export const ChatInterface = ({
       const parsedMessages = [];
       data.forEach((msg) => {
         const message = msg.message;
-        const response = msg.response;
-        parsedMessages.push(JSON.parse(message));
-        if (response != null) parsedMessages.push(JSON.parse(response));
+        parsedMessages.push(message);
       });
       setMessages(parsedMessages);
     };
 
     fetchMessages();
-  }, [activeChatId]);
+  }, [activeChatId, messages]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,50 +60,31 @@ export const ChatInterface = ({
       type: "user",
       content: input,
     };
-
-    // Check if the message object can be stringified
-    let messageString;
-    try {
-      messageString = JSON.stringify(newMessage); // Try stringifying the object
-    } catch (error) {
-      console.error("Error stringifying message:", error);
-      return; // If stringification fails, exit early
-    }
-
     // Check if activeChatId exists
     if (!activeChatId) {
       console.error("Error: No active chat ID available.");
       return;
     }
-    const aiResponse: Message = {
-      type: "ai",
-      content:
-        "I'll analyze that GitHub repository for you shortly. (This is a placeholder response)",
-    };
     // AI CALL HEREERE!!!
-
-    // Save the message to Supabase
-    const { error } = await supabase.from("messages").insert([
-      {
-        chat_id: activeChatId,
-        session_id: session_id,
-        message: messageString,
-        response: JSON.stringify(aiResponse),
-      },
-    ]);
-
-    if (error) {
-      console.error("Error saving user message to db:", error.message);
-      return;
+    try {
+      await fetch("http://localhost:8001/api/pydantic-github-agent", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: input,
+          chat_id: activeChatId,
+          request_id: crypto.randomUUID(),
+          session_id: session_id,
+        }),
+      });
+    } catch (error) {
+      console.error("Error sending request:", error);
     }
 
-    setMessages([...messages, newMessage]);
     setInput(""); // Reset input field
-
-    // Placeholder AI response (will be replaced with actual API call)
-    setTimeout(() => {
-      setMessages((prev) => [...prev, aiResponse]);
-    }, 1000);
+    setMessages([...messages, newMessage]);
   };
 
   return (

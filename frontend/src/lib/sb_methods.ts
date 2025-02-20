@@ -72,7 +72,7 @@ export const getMessagesForChat = async (
 
   return data.map((msg) => ({
     id: msg.id,
-    ...JSON.parse(msg.message), // Parse stored JSON data
+    ...msg.message, // Parse stored JSON data
     created_at: msg.created_at,
   }));
 };
