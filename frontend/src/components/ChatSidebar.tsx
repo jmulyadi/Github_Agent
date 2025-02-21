@@ -18,6 +18,7 @@ interface ChatSidebarProps {
   setActiveChatId: (activeChatId: string) => void;
   activeChatId: string | null;
 }
+import { supabase } from "@/lib/supabase";
 
 export const ChatSidebar = ({
   isCollapsed,
@@ -48,9 +49,33 @@ export const ChatSidebar = ({
 
   // Subscribe to new messages for the active chat
   useEffect(() => {
-    console.log("gott do something here");
     // Cleanup the subscription when the component is unmounted or chatId changes
   }, [activeChatId]); // Re-run this effect whenever activeChatId changes
+
+  const newChat = async () => {
+    const newChatData = {
+      title: "New Chat", // Default title
+      created_at: new Date().toISOString(),
+    };
+
+    const { data, error } = await supabase
+      .from("chats")
+      .insert([newChatData])
+      .select();
+
+    if (error) {
+      console.error("Error creating new chat:", error.message);
+      return;
+    }
+
+    if (data && data.length > 0) {
+      const newChatEntry = data[0];
+      console.log(newChatEntry);
+      // Update state with new chat
+      setConversations((prev) => [newChatEntry, ...prev]);
+      setActiveChatId(newChatEntry.id); // Set new chat as active
+    }
+  };
 
   return (
     <div
@@ -75,7 +100,7 @@ export const ChatSidebar = ({
         >
           <button
             //ADD NEW CHAT FUNCTION EHRE
-            //onClick={}
+            onClick={newChat}
             className="rounded-lg p-2 hover:bg-white/5 transition-colors"
           >
             <SquarePen
@@ -92,7 +117,11 @@ export const ChatSidebar = ({
             {conversations.map((conv) => (
               <div
                 key={conv.id} // Use chat_id for unique identifier
-                className="p-2.5 md:p-3 rounded-lg hover:bg-white/5 cursor-pointer transition-colors group"
+                className={`p-2.5 md:p-3 rounded-lg hover:bg-white/5 cursor-pointer transition-colors group ${
+                  activeChatId === conv.id
+                    ? "bg-accent text-white"
+                    : "hover:bg-white/5"
+                }`}
                 // When clicked, set the active chat's ID
                 onClick={() => {
                   console.log("curr chat_id: ", conv.id, conv);
@@ -100,7 +129,11 @@ export const ChatSidebar = ({
                 }}
               >
                 <div className="text-sm font-medium truncate">{conv.title}</div>
-                <div className="text-xs text-gray-400">{conv.timestamp}</div>
+                <div
+                  className={`text-xs ${activeChatId === conv.id ? "text-white" : "text-gray-400"}`}
+                >
+                  {conv.timestamp}
+                </div>
               </div>
             ))}
           </div>

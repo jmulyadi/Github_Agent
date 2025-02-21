@@ -22,7 +22,11 @@ export const ChatInterface = ({
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const isMobile = useIsMobile();
+  const [_, setDummy] = useState(false);
 
+  const forceReRender = () => {
+    setDummy((prev) => !prev); // Toggle a dummy state value to force re-render
+  };
   // Fetch messages when activeChatId changes
   useEffect(() => {
     const fetchMessages = async () => {
@@ -50,7 +54,7 @@ export const ChatInterface = ({
     };
 
     fetchMessages();
-  }, [activeChatId, messages]);
+  }, [activeChatId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,6 +68,39 @@ export const ChatInterface = ({
     if (!activeChatId) {
       console.error("Error: No active chat ID available.");
       return;
+    }
+    // Fetch current chat title
+    const { data: chatData, error: chatError } = await supabase
+      .from("chats")
+      .select("title")
+      .eq("id", activeChatId)
+      .single();
+
+    if (chatError) {
+      console.error("Error fetching chat title:", chatError.message);
+      return;
+    }
+    // Generate a good title for the chat
+    const generateTitle = (query: string) => {
+      const sentenceEnd =
+        query.indexOf(".") !== -1 ? query.indexOf(".") : query.length;
+
+      // Extract first 5 words or the first sentence
+      const title = query.substring(0, sentenceEnd).trim();
+      return title.length > 50 ? title.slice(0, 50) + "..." : title;
+    };
+
+    const generatedTitle = generateTitle(input); // Summarize the input to a title
+    if (chatData?.title === "New Chat") {
+      const { error: updateError } = await supabase
+        .from("chats")
+        .update({ title: generatedTitle }) // Set new title
+        .eq("id", activeChatId);
+      if (updateError) {
+        console.error("Error updating chat title:", updateError.message);
+      } else {
+        console.log("Chat title updated successfully!");
+      }
     }
     // AI CALL HEREERE!!!
     try {
